@@ -113,24 +113,24 @@ $todas_las_citas = $stmt->fetchAll();
                 <div class="card shadow-sm h-100">
                     <div class="card-header bg-success text-white"><strong>Agregar Foto</strong></div>
                     <div class="card-body">
-                        <form action="procesar_portafolio.php" method="POST">
-                            <div class="mb-3">
-                                <label class="form-label">Título de la foto</label>
-                                <input type="text" name="titulo" class="form-control" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Categoría</label>
-                                <select name="categoria" class="form-select" required>
-                                    <option value="bodas">Bodas</option>
-                                    <option value="retratos">Retratos</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">URL de la Imagen (JPG/PNG)</label>
-                                <input type="url" name="url_imagen" class="form-control" placeholder="https://ejemplo.com/foto.jpg" required>
-                            </div>
-                            <button type="submit" class="btn btn-success w-100">Subir al Portafolio</button>
-                        </form>
+                      <form action="procesar_portafolio.php" method="POST" enctype="multipart/form-data">
+    <div class="mb-3">
+        <label class="form-label">Título de la foto</label>
+        <input type="text" name="titulo" class="form-control" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Categoría</label>
+        <select name="categoria" class="form-select" required>
+            <option value="bodas">Bodas</option>
+            <option value="retratos">Retratos</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Subir Imagen desde PC (JPG/PNG)</label>
+        <input type="file" name="imagen" class="form-control" accept="image/jpeg, image/png" required>
+    </div>
+    <button type="submit" class="btn btn-success w-100">Subir al Portafolio</button>
+</form>
                     </div>
                 </div>
             </div>
