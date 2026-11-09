@@ -1,3 +1,64 @@
+<?php
+session_start();
+require 'conexion.php';
+
+if (!isset($_SESSION['usuario_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
+// Obtener las citas del usuario logueado uniendo la tabla servicios para obtener el nombre
+$sql = "SELECT c.fecha_cita, c.hora_cita, c.estado, s.nombre AS servicio_nombre 
+        FROM citas c 
+        JOIN servicios s ON c.servicio_id = s.id 
+        WHERE c.usuario_id = :usuario_id 
+        ORDER BY c.fecha_cita DESC";
+$stmt = $pdo->prepare($sql);
+$stmt->execute([':usuario_id' => $_SESSION['usuario_id']]);
+$mis_citas = $stmt->fetchAll();
+?>
+
+<!-- ... Tu header y navbar aquí ... -->
+
+<div class="container my-5">
+    <h2>Mi Panel - Hola, <?php echo htmlspecialchars($_SESSION['nombre']); ?></h2>
+    
+    <div class="card shadow-sm mt-4">
+        <div class="card-header"><strong>Mis Citas Próximas</strong></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Servicio</th>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($mis_citas)): ?>
+                            <tr><td colspan="4" class="text-center">No tienes citas programadas.</td></tr>
+                        <?php else: ?>
+                            <?php foreach ($mis_citas as $cita): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($cita['servicio_nombre']); ?></td>
+                                    <td><?php echo htmlspecialchars($cita['fecha_cita']); ?></td>
+                                    <td><?php echo htmlspecialchars($cita['hora_cita']); ?></td>
+                                    <td>
+                                        <span class="badge bg-<?php echo $cita['estado'] == 'pendiente' ? 'warning' : 'success'; ?> text-dark">
+                                            <?php echo ucfirst(htmlspecialchars($cita['estado'])); ?>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 <!DOCTYPE html>
 <html lang="es">
 <head>

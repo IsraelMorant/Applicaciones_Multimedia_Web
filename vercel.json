@@ -12,6 +12,16 @@
       "src": "*.js",
       "use": "@vercel/static"
     }
+  ],
+  "routes": [
+    {
+      "src": "/(.*\\.php)",
+      "dest": "/$1",
+      "methods": ["GET", "POST", "OPTIONS"]
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
   ]
 }
-

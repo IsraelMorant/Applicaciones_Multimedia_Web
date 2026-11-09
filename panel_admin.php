@@ -1,3 +1,60 @@
+<?php
+session_start();
+require 'conexion.php';
+
+if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
+    header("Location: login.php");
+    exit;
+}
+
+// Obtener todas las citas del sistema
+$sql = "SELECT c.id, c.fecha_cita, c.hora_cita, c.estado, 
+               u.nombre AS cliente_nombre, s.nombre AS servicio_nombre 
+        FROM citas c 
+        JOIN usuarios u ON c.usuario_id = u.id
+        JOIN servicios s ON c.servicio_id = s.id 
+        ORDER BY c.fecha_cita DESC";
+$stmt = $pdo->query($sql);
+$todas_las_citas = $stmt->fetchAll();
+?>
+
+<!-- ... Tu header y navbar aquí ... -->
+
+<div class="container my-5">
+    <h2>Administración General</h2>
+    <div class="card shadow-sm mb-4">
+        <div class="card-header"><strong>Todas las Citas</strong></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Servicio</th>
+                            <th>Fecha / Hora</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($todas_las_citas as $cita): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($cita['cliente_nombre']); ?></td>
+                                <td><?php echo htmlspecialchars($cita['servicio_nombre']); ?></td>
+                                <td><?php echo htmlspecialchars($cita['fecha_cita'] . ' ' . $cita['hora_cita']); ?></td>
+                                <td>
+                                    <span class="badge bg-info text-dark">
+                                        <?php echo ucfirst(htmlspecialchars($cita['estado'])); ?>
+                                    </span>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
