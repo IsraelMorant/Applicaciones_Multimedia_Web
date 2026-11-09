@@ -69,7 +69,7 @@ $todas_las_citas = $stmt->fetchAll();
    <!-- Barra de Navegación Dinámica -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="inicio.php">EstudioFoto</a>
+            <a class="navbar-brand" href="inicio.php">GES EStudio</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>

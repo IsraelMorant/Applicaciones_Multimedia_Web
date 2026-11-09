@@ -1,5 +1,19 @@
 <?php
 session_start();
+require 'conexion.php';
+
+if (!isset($_SESSION['usuario_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
+// Fetch the user's email from the database
+$sql = "SELECT email FROM usuarios WHERE id = :id";
+$stmt = $pdo->prepare($sql);
+$stmt->execute([':id' => $_SESSION['usuario_id']]);
+$usuario_actual = $stmt->fetch();
+$email_actual = $usuario_actual['email'];
+?>
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -17,7 +31,7 @@ session_start();
   <!-- Barra de Navegación Dinámica -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="inicio.php">EstudioFoto</a>
+            <a class="navbar-brand" href="inicio.php">GES EStudio</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -49,11 +63,11 @@ session_start();
         <form action="actualizar_perfil.php" method="POST" class="card p-4 shadow-sm">
             <div class="mb-3">
                 <label for="nombre_perfil" class="form-label">Nombre</label>
-                <input type="text" class="form-control" id="nombre_perfil" name="nombre" value="Usuario Actual" required>
+<input type="text" class="form-control" id="nombre_perfil" name="nombre" value="<?php echo htmlspecialchars($_SESSION['nombre']); ?>" required>
             </div>
             <div class="mb-3">
                 <label for="email_perfil" class="form-label">Correo (No modificable)</label>
-                <input type="email" class="form-control" id="email_perfil" value="usuario@email.com" disabled>
+                <input type="email" class="form-control" id="email_perfil" value="<?php echo htmlspecialchars($email_actual); ?>" disabled>
             </div>
             <hr>
             <div class="mb-3">
