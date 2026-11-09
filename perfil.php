@@ -82,7 +82,7 @@ $email_actual = $usuario_actual['email'];
 
     <!-- Footer -->
     <footer class="bg-dark text-white text-center py-3 mt-auto">
-        <p class="mb-0">&copy; 2026 Estudio Fotográfico. Todos los derechos reservados.</p>
+        <p class="mb-0">&copy; 2026 GES EStudio Fotográfico. Todos los derechos reservados.</p>
     </footer>
 
     <!-- Bootstrap JS (Necesario para que el menú funcione en teléfonos) -->
