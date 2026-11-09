@@ -14,7 +14,6 @@ $stmt->execute([':id' => $_SESSION['usuario_id']]);
 $usuario_actual = $stmt->fetch();
 $email_actual = $usuario_actual['email'];
 ?>
-?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
