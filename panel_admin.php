@@ -17,9 +17,7 @@ $sql = "SELECT c.id, c.fecha_cita, c.hora_cita, c.estado,
 $stmt = $pdo->query($sql);
 $todas_las_citas = $stmt->fetchAll();
 ?>
-
 <!-- ... Tu header y navbar aquí ... -->
-
 <div class="container my-5">
     <h2>Administración General</h2>
     <div class="card shadow-sm mb-4">
