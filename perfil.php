@@ -77,7 +77,7 @@ $email_actual = $usuario_actual['email'];
             <button type="submit" class="btn btn-primary w-100">Guardar Cambios</button>
             <a href="logout.php" class="btn btn-outline-danger w-100 mt-2">Cerrar Sesión</a>
         </form>
-    </div>
+</div>
 </div>
     </main>
 
