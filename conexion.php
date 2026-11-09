@@ -29,7 +29,9 @@ try {
     
 } catch (PDOException $e) {
     // Evitamos imprimir $e->getMessage() en producción para no revelar datos de la BD
-    error_log("Error de conexión: " . $e->getMessage());
-    die("Error interno del servidor. Por favor, intenta más tarde.");
+   // error_log("Error de conexión: " . $e->getMessage());
+  //  die("Error interno del servidor. Por favor, intenta más tarde.");
+
+die("Error real de BD: " . $e->getMessage());
 }
 ?>
