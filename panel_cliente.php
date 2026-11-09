@@ -29,7 +29,7 @@ $mis_citas = $stmt->fetchAll();
 </head>
 <body>
 
-    <!-- Barra de Navegación Dinámica -->
+   <!-- Barra de Navegación Dinámica -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="inicio.php">EstudioFoto</a>
@@ -56,7 +56,6 @@ $mis_citas = $stmt->fetchAll();
             </div>
         </div>
     </nav>
-
     <!-- Contenido Principal -->
     <main class="container my-5" style="min-height: 70vh;">
         <div class="d-flex justify-content-between align-items-center mb-4">

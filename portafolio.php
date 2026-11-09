@@ -18,8 +18,8 @@ session_start();
 </head>
 <body>
 
-    <!-- Barra de Navegación Responsiva -->
-   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <!-- Barra de Navegación Dinámica -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="inicio.php">EstudioFoto</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
