@@ -1,0 +1,124 @@
+/* =========================================
+   1. DEFINICIÓN DE LA PALETA DE COLORES
+   ========================================= */
+:root {
+    --color-oro: #9C783F;         /* Dorado oscuro / Tierra */
+    --color-pastel-verde: #f8e0ff;/* Verde pastel suave */
+    --color-marino: #00414B;      /* Azul marino verdoso oscuro */
+    --color-pastel-lila: #E9C0FF; /* Lila pastel */
+    --color-esmeralda: #009075;   /* Verde esmeralda intenso */
+}
+
+/* =========================================
+   2. ESTILOS GLOBALES
+   ========================================= */
+body {
+    /* Un fondo sutilmente entintado hacia el verde pastel para no usar blanco puro */
+    background-color: #fcfdfa; 
+    color: var(--color-marino);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* =========================================
+   3. NAVEGACIÓN Y FOOTER (Reemplazando bg-dark)
+   ========================================= */
+.bg-dark {
+    background-color: var(--color-marino) !important;
+}
+
+.navbar-brand, .nav-link {
+    color: var(--color-pastel-verde) !important;
+}
+
+.nav-link:hover {
+    color: white !important;
+}
+
+/* =========================================
+   4. BOTONES (Reemplazando btn-primary y secundarios)
+   ========================================= */
+.btn-primary {
+    background-color: var(--color-esmeralda);
+    border-color: var(--color-esmeralda);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--color-marino);
+    border-color: var(--color-marino);
+}
+
+.btn-outline-primary {
+    color: var(--color-esmeralda);
+    border-color: var(--color-esmeralda);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--color-esmeralda);
+    color: white;
+}
+
+/* Botón outline-secondary del inicio (para el Portafolio) */
+.btn-outline-secondary {
+    color: var(--color-oro);
+    border-color: var(--color-oro);
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--color-oro);
+    color: white;
+}
+
+/* =========================================
+   5. TARJETAS (Cards) Y CONTENEDORES
+   ========================================= */
+.card {
+    border: none;
+    border-radius: 12px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 15px rgba(0, 65, 75, 0.08) !important; /* Sombra teñida del color marino */
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+/* El header del Panel del Cliente y Admin */
+.card-header {
+    background-color: var(--color-pastel-lila) !important;
+    color: var(--color-marino) !important;
+    border-bottom: none;
+    border-radius: 12px 12px 0 0 !important;
+}
+
+/* =========================================
+   6. TIPOGRAFÍA Y DETALLES
+   ========================================= */
+/* Reemplazar el texto azul por defecto de Bootstrap */
+.text-primary {
+    color: var(--color-esmeralda) !important;
+}
+
+.text-muted {
+    color: #6c757d !important; /* Mantenemos un gris legible para subtítulos */
+}
+
+/* Etiquetas (Badges) */
+.badge.bg-primary {
+    background-color: var(--color-oro) !important;
+    color: white;
+}
+
+/* =========================================
+   7. FORMULARIOS
+   ========================================= */
+.form-control, .form-select {
+    border: 1px solid var(--color-pastel-verde);
+    border-radius: 8px;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--color-esmeralda);
+    box-shadow: 0 0 0 0.25rem rgba(0, 144, 117, 0.25);
+}
