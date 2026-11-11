@@ -2,34 +2,39 @@
 session_start();
 require 'conexion.php';
 
-// Validar que el usuario esté logueado
+// Validar que el usuario haya iniciado sesión
 if (!isset($_SESSION['usuario_id'])) {
     header("Location: login.php");
     exit;
 }
 
-// Obtener las citas del usuario logueado
-$sql = "SELECT c.fecha_cita, c.hora_cita, c.estado, s.nombre AS servicio_nombre 
-        FROM citas c 
-        JOIN servicios s ON c.servicio_id = s.id 
-        WHERE c.usuario_id = :usuario_id 
-        ORDER BY c.fecha_cita DESC";
+// Si es admin, lo mandamos a su panel
+if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin') {
+    header("Location: panel_admin.php");
+    exit;
+}
+
+$usuario_id = $_SESSION['usuario_id'];
+
+// Obtener las fotos privadas de este cliente en específico
+$sql = "SELECT id, url_imagen, seleccionada FROM galerias_clientes WHERE usuario_id = :usuario_id ORDER BY fecha_subida DESC";
 $stmt = $pdo->prepare($sql);
-$stmt->execute([':usuario_id' => $_SESSION['usuario_id']]);
-$mis_citas = $stmt->fetchAll();
+$stmt->execute([':usuario_id' => $usuario_id]);
+$fotos_privadas = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Panel - Estudio Fotográfico</title>
+    <title>Mi Panel - GES Estudio</title>
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-   <!-- Barra de Navegación Dinámica -->
+    <!-- Barra de Navegación Dinámica -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="inicio.php">GES EStudio</a>
@@ -43,71 +48,65 @@ $mis_citas = $stmt->fetchAll();
                     <li class="nav-item"><a class="nav-link" href="portafolio.php">Portafolio</a></li>
                     <li class="nav-item"><a class="nav-link" href="contacto.php">Contacto</a></li>
                     
-      
-<?php if(isset($_SESSION['usuario_id'])): ?>
-    <!-- Validación de Rol para el Panel -->
-    <?php if(isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin'): ?>
-        <li class="nav-item"><a class="nav-link" href="panel_admin.php">Panel Admin</a></li>
-    <?php else: ?>
-        <li class="nav-item"><a class="nav-link" href="panel_cliente.php">Mi Panel</a></li>
-    <?php endif; ?>
-    
-    <li class="nav-item"><a class="nav-link" href="perfil.php">Mi Cuenta</a></li>
-    <!-- Quitamos 'nav-link' del botón de Salir -->
-    <li class="nav-item ms-2 align-self-center"><a class="btn btn-outline-danger btn-sm" href="logout.php">Salir</a></li>
-<?php else: ?>
-    <!-- Quitamos 'nav-link' del botón de Acceder -->
-    <li class="nav-item ms-2 align-self-center"><a class="btn btn-outline-light" href="login.php">Acceder</a></li>
-<?php endif; ?>
+                    <li class="nav-item"><a class="nav-link active" href="panel_cliente.php">Mi Panel</a></li>
+                    <li class="nav-item"><a class="nav-link" href="perfil.php">Mi Cuenta</a></li>
+                    <li class="nav-item ms-2 align-self-center"><a class="btn btn-outline-danger btn-sm" href="logout.php">Salir</a></li>
                 </ul>
             </div>
         </div>
     </nav>
-    <!-- Contenido Principal -->
+
     <main class="container my-5" style="min-height: 70vh;">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Mi Panel - Hola, <?php echo htmlspecialchars($_SESSION['nombre']); ?></h2>
-            <a href="agendar_cita.php" class="btn btn-primary">Nueva Cita</a>
-        </div>
-        
-        <div class="card shadow-sm">
-            <div class="card-header"><strong>Mis Citas Próximas</strong></div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Servicio</th>
-                                <th>Fecha</th>
-                                <th>Hora</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if (empty($mis_citas)): ?>
-                                <tr><td colspan="4" class="text-center py-4">No tienes citas programadas.</td></tr>
-                            <?php else: ?>
-                                <?php foreach ($mis_citas as $cita): ?>
-                                    <tr>
-                                        <td><?php echo htmlspecialchars($cita['servicio_nombre']); ?></td>
-                                        <td><?php echo htmlspecialchars($cita['fecha_cita']); ?></td>
-                                        <td><?php echo htmlspecialchars($cita['hora_cita']); ?></td>
-                                        <td>
-                                            <span class="badge bg-<?php echo $cita['estado'] == 'pendiente' ? 'warning' : 'success'; ?> text-dark">
-                                                <?php echo ucfirst(htmlspecialchars($cita['estado'])); ?>
-                                            </span>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
+        <h2 class="mb-2">Bienvenido, <?php echo htmlspecialchars($_SESSION['nombre']); ?></h2>
+        <p class="text-muted mb-4">Revisa tu galería privada y selecciona las fotografías que deseas que editemos.</p>
+
+        <?php if (isset($_GET['exito']) && $_GET['exito'] == '1'): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                ¡Tu selección ha sido guardada exitosamente! El estudio ha sido notificado.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-        </div>
+        <?php endif; ?>
+
+        <?php if (empty($fotos_privadas)): ?>
+            <div class="alert alert-info text-center mt-5 p-5 shadow-sm">
+                <h4>Tu galería está vacía</h4>
+                <p>El estudio aún no ha subido las fotografías de tu sesión. Vuelve a revisar más tarde.</p>
+            </div>
+        <?php else: ?>
+            <form action="procesar_seleccion.php" method="POST">
+                <div class="row g-4 mb-4">
+                    <?php foreach ($fotos_privadas as $foto): ?>
+                        <div class="col-md-4 col-lg-3">
+                            <div class="card h-100 shadow-sm <?php echo $foto['seleccionada'] ? 'border-success border-2' : 'border-0'; ?>">
+                                <img src="<?php echo htmlspecialchars($foto['url_imagen']); ?>" 
+                                     class="card-img-top" 
+                                     alt="Foto de sesión" 
+                                     style="object-fit: cover; height: 200px;">
+                                <div class="card-body text-center bg-light">
+                                    <div class="form-check d-flex justify-content-center align-items-center gap-2">
+                                        <input class="form-check-input fs-5 mt-0" 
+                                               type="checkbox" 
+                                               name="fotos_seleccionadas[]" 
+                                               value="<?php echo $foto['id']; ?>" 
+                                               id="foto_<?php echo $foto['id']; ?>"
+                                               <?php echo $foto['seleccionada'] ? 'checked' : ''; ?>>
+                                        <label class="form-check-label fw-bold" for="foto_<?php echo $foto['id']; ?>">
+                                            Seleccionar
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                
+                <div class="d-flex justify-content-end bg-white sticky-bottom py-3 border-top">
+                    <button type="submit" class="btn btn-success btn-lg px-5 shadow">Confirmar Selección</button>
+                </div>
+            </form>
+        <?php endif; ?>
     </main>
 
-    <!-- Footer -->
     <footer class="bg-dark text-white text-center py-3 mt-auto">
         <p class="mb-0">&copy; 2026 GES EStudio Fotográfico. Todos los derechos reservados.</p>
     </footer>

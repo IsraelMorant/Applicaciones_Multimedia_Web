@@ -185,7 +185,7 @@ $clientes =$stmt_clientes->fetchAll();
                 <div class="card shadow-sm h-100 border-0 bg-light">
                     <div class="card-body text-center d-flex flex-column justify-content-center">
                         <h5 class="text-muted">Instrucciones de Flujo</h5>
-                        <p class="text-muted small">Sube aquí las fotografías sin editar. El cliente podrá verlas en su panel, seleccionar sus favoritas y confirmar la selección para que procedas a editarlas, tal como indica la rúbrica del proyecto.</p>
+                        <p class="text-muted small">Sube aquí las fotografías sin editar. El cliente podrá verlas en su panel, seleccionar sus favoritas y confirmar la selección para que procedas a editarlas.</p>
                     </div>
                 </div>
             </div>
