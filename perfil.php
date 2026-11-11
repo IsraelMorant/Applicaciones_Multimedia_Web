@@ -42,20 +42,21 @@ $email_actual = $usuario_actual['email'];
                     <li class="nav-item"><a class="nav-link" href="contacto.php">Contacto</a></li>
                      
          
-                    <?php if(isset($_SESSION['usuario_id'])): ?>
-                        <!-- Validación de Rol para el Panel -->
-                        <?php if(isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin'): ?>
-                            <li class="nav-item"><a class="nav-link" href="panel_admin.php">Panel Admin</a></li>
-                        <?php else: ?>
-                            <li class="nav-item"><a class="nav-link" href="panel_cliente.php">Mi Panel</a></li>
-                        <?php endif; ?>
-                        
-                        <li class="nav-item"><a class="nav-link" href="perfil.php">Mi Cuenta</a></li>
-                        <li class="nav-item"><a class="nav-link btn btn-outline-danger ms-2 btn-sm" href="logout.php">Salir</a></li>
-                    <?php else: ?>
-                        <li class="nav-item"><a class="nav-link btn btn-outline-light ms-2" href="login.php">Acceder</a></li>
-                    <?php endif; ?>
-
+<?php if(isset($_SESSION['usuario_id'])): ?>
+    <!-- Validación de Rol para el Panel -->
+    <?php if(isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin'): ?>
+        <li class="nav-item"><a class="nav-link" href="panel_admin.php">Panel Admin</a></li>
+    <?php else: ?>
+        <li class="nav-item"><a class="nav-link" href="panel_cliente.php">Mi Panel</a></li>
+    <?php endif; ?>
+    
+    <li class="nav-item"><a class="nav-link" href="perfil.php">Mi Cuenta</a></li>
+    <!-- Quitamos 'nav-link' del botón de Salir -->
+    <li class="nav-item ms-2 align-self-center"><a class="btn btn-outline-danger btn-sm" href="logout.php">Salir</a></li>
+<?php else: ?>
+    <!-- Quitamos 'nav-link' del botón de Acceder -->
+    <li class="nav-item ms-2 align-self-center"><a class="btn btn-outline-light" href="login.php">Acceder</a></li>
+<?php endif; ?>
                 </ul>
             </div>
         </div>
