@@ -53,7 +53,7 @@ session_start();
     </div>
     <div class="col-md-6 text-center">
         <!-- Placeholder para una foto destacada del estudio -->
-        <img src="https://via.placeholder.com/600x400" class="img-fluid rounded shadow" alt="Estudio Fotográfico">
+        <img src="ImagenPrincipal.jpg" class="img-fluid rounded shadow" alt="Estudio Fotográfico">
     </div>
 </div>
     </main>
