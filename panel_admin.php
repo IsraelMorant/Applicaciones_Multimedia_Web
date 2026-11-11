@@ -3,7 +3,7 @@ session_start();
 require 'conexion.php';
 
 // Candado estricto: Solo admins
-if (!isset($_SESSION['usuario_id']) \vert{}\vert{}$_SESSION['rol'] !== 'admin') {
+if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
     header("Location: login.php");
     exit;
 }
