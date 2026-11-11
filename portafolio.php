@@ -39,7 +39,13 @@ try {
                     <li class="nav-item"><a class="nav-link" href="contacto.php">Contacto</a></li>
                     
                     <?php if(isset($_SESSION['usuario_id'])): ?>
-                        <li class="nav-item"><a class="nav-link" href="panel_cliente.php">Mi Panel</a></li>
+                        <!-- Validación de Rol para el Panel -->
+                        <?php if(isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin'): ?>
+                            <li class="nav-item"><a class="nav-link" href="panel_admin.php">Panel Admin</a></li>
+                        <?php else: ?>
+                            <li class="nav-item"><a class="nav-link" href="panel_cliente.php">Mi Panel</a></li>
+                        <?php endif; ?>
+                        
                         <li class="nav-item"><a class="nav-link" href="perfil.php">Mi Cuenta</a></li>
                         <li class="nav-item"><a class="nav-link btn btn-outline-danger ms-2 btn-sm" href="logout.php">Salir</a></li>
                     <?php else: ?>

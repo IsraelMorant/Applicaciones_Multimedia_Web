@@ -28,15 +28,21 @@ session_start();
                     <li class="nav-item"><a class="nav-link" href="portafolio.php">Portafolio</a></li>
                     <li class="nav-item"><a class="nav-link" href="contacto.php">Contacto</a></li>
                     
+       
                     <?php if(isset($_SESSION['usuario_id'])): ?>
-                        <!-- Menú para usuarios logueados -->
-                        <li class="nav-item"><a class="nav-link active" href="panel_cliente.php">Mi Panel</a></li>
+                        <!-- Validación de Rol para el Panel -->
+                        <?php if(isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin'): ?>
+                            <li class="nav-item"><a class="nav-link" href="panel_admin.php">Panel Admin</a></li>
+                        <?php else: ?>
+                            <li class="nav-item"><a class="nav-link" href="panel_cliente.php">Mi Panel</a></li>
+                        <?php endif; ?>
+                        
                         <li class="nav-item"><a class="nav-link" href="perfil.php">Mi Cuenta</a></li>
                         <li class="nav-item"><a class="nav-link btn btn-outline-danger ms-2 btn-sm" href="logout.php">Salir</a></li>
                     <?php else: ?>
-                        <!-- Menú para visitantes -->
                         <li class="nav-item"><a class="nav-link btn btn-outline-light ms-2" href="login.php">Acceder</a></li>
                     <?php endif; ?>
+
                 </ul>
             </div>
         </div>
