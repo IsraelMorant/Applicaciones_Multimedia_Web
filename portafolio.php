@@ -70,7 +70,7 @@ try {
             <?php else: ?>
                 <?php foreach ($fotos as $foto): ?>
                     <!-- La clase 'portfolio-item' y la categoría impresa dinámicamente conectan con el JS -->
-                    <div class="col-md-4 portfolio-item <?php echo htmlspecialchars($foto['categoria']); ?>">
+                    <div class="col-md-4 portfolio-item <?php echo strtolower(trim(htmlspecialchars($foto['categoria']))); ?>">
                         <div class="card border-0 shadow-sm h-100">
                             <img src="<?php echo htmlspecialchars($foto['url_imagen']); ?>" 
                                  class="card-img-top rounded" 
@@ -90,6 +90,38 @@ try {
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="scripts.js"></script>
+    <script>
+document.addEventListener("DOMContentLoaded", function() {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const portfolioItems = document.querySelectorAll('.portfolio-item');
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Quitar el color oscuro de todos los botones
+            filterBtns.forEach(b => {
+                b.classList.remove('btn-dark', 'active');
+                b.classList.add('btn-outline-dark');
+            });
+            
+            // Pintar de oscuro el botón presionado
+            btn.classList.remove('btn-outline-dark');
+            btn.classList.add('btn-dark', 'active');
+
+            // Obtener la categoría del botón y forzarla a minúsculas
+            const filterValue = btn.getAttribute('data-filter').toLowerCase().trim();
+
+            // Mostrar u ocultar imágenes
+            portfolioItems.forEach(item => {
+                // Comparamos si es 'todos' o si la imagen tiene la clase de la categoría
+                if (filterValue === 'todos' || filterValue === 'all' || item.classList.contains(filterValue)) {
+                    item.style.display = 'block'; 
+                } else {
+                    item.style.display = 'none'; 
+                }
+            });
+        });
+    });
+});
+</script>
 </body>
 </html>

@@ -46,7 +46,7 @@ session_start();
     <main class="container my-5" style="min-height: 70vh;">
        <div class="row align-items-center" style="min-height: 60vh;">
     <div class="col-md-6">
-        <h1 class="display-4 fw-bold">Capturando tu esencia en cada disparo</h1>
+        <h1 class="display-4 fw-bold">Fotografiando sentimientos en momentos</h1>
         <p class="lead text-muted">Sesiones profesionales para bodas, graduaciones, eventos y retratos personales.</p>
         <a href="servicios.php" class="btn btn-primary btn-lg mt-3">Ver Paquetes</a>
         <a href="portafolio.php" class="btn btn-outline-secondary btn-lg mt-3 ms-2">Ver Portafolio</a>
