@@ -1,5 +1,18 @@
 <?php
 session_start();
+require 'conexion.php';
+
+// 1. Verificar que el usuario haya iniciado sesión (si no, al login)
+if (!isset($_SESSION['usuario_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
+// 2. CANDADO DE ROL: Si el usuario es admin, bloquear acceso y regresarlo a su panel
+if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin') {
+    header("Location: panel_admin.php?error=admin_reserva");
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
