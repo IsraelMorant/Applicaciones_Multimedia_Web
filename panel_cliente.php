@@ -7,12 +7,12 @@ if (!isset($_SESSION['usuario_id'])) {
     exit;
 }
 
-if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin') {
+if (isset($_SESSION['rol']) &&$_SESSION['rol'] === 'admin') {
     header("Location: panel_admin.php");
     exit;
 }
 
-$usuario_id = $_SESSION['usuario_id'];
+$usuario_id =$_SESSION['usuario_id'];
 
 // 1. Obtener las citas/servicios contratados por este cliente
 $sql_citas = "SELECT c.id, c.fecha_cita, c.hora_cita, c.estado, s.nombre AS servicio_nombre 
@@ -21,14 +21,22 @@ $sql_citas = "SELECT c.id, c.fecha_cita, c.hora_cita, c.estado, s.nombre AS serv
               WHERE c.usuario_id = :usuario_id 
               ORDER BY c.fecha_cita DESC";
 $stmt_citas = $pdo->prepare($sql_citas);
-$stmt_citas->execute([':usuario_id' => $usuario_id]);
-$mis_citas = $stmt_citas->fetchAll();
+$stmt_citas->execute([':usuario_id' =>$usuario_id]);
+$mis_citas =$stmt_citas->fetchAll();
+
+// NUEVA LÓGICA: Verificar si el cliente tiene al menos una cita pendiente para permitirle editar
+$puede_editar = false;
+foreach ($mis_citas as$cita) {
+    if ($cita['estado'] === 'pendiente') {$puede_editar = true;
+        break; 
+    }
+}
 
 // 2. Obtener las fotos privadas de la galería
 $sql_fotos = "SELECT id, url_imagen, seleccionada FROM galerias_clientes WHERE usuario_id = :usuario_id ORDER BY fecha_subida DESC";
 $stmt_fotos = $pdo->prepare($sql_fotos);
-$stmt_fotos->execute([':usuario_id' => $usuario_id]);
-$fotos_privadas = $stmt_fotos->fetchAll();
+$stmt_fotos->execute([':usuario_id' =>$usuario_id]);
+$fotos_privadas =$stmt_fotos->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -41,7 +49,6 @@ $fotos_privadas = $stmt_fotos->fetchAll();
 </head>
 <body>
 
-    <!-- Tu NavBar Dinámico (Igual que siempre) -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="inicio.php">GES EStudio</a>
@@ -65,14 +72,14 @@ $fotos_privadas = $stmt_fotos->fetchAll();
     <main class="container my-5" style="min-height: 70vh;">
         <h2 class="mb-2">Bienvenido, <?php echo htmlspecialchars($_SESSION['nombre']); ?></h2>
         
-        <?php if (isset($_GET['estado']) && $_GET['estado'] == 'actualizado'): ?>
+        <?php if (isset($_GET['estado']) &&$_GET['estado'] == 'actualizado'): ?>
             <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
                 ¡Gracias por confirmar! El estado de tu servicio ha sido actualizado.
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <?php endif; ?>
 
-        <!-- SECCIÓN 1: Estado del Servicio (NUEVO) -->
+        <!-- SECCIÓN 1: Estado del Servicio -->
         <div class="card shadow-sm mt-4 mb-5 border-0">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">Mis Servicios Contratados</h5>
@@ -92,10 +99,10 @@ $fotos_privadas = $stmt_fotos->fetchAll();
                             <?php if(empty($mis_citas)): ?>
                                 <tr><td colspan="4" class="text-center py-4">No tienes servicios contratados.</td></tr>
                             <?php else: ?>
-                                <?php foreach($mis_citas as $cita): ?>
+                                <?php foreach($mis_citas as$cita): ?>
                                     <tr>
                                         <td class="ps-3 fw-bold"><?php echo htmlspecialchars($cita['servicio_nombre']); ?></td>
-                                        <td><?php echo htmlspecialchars($cita['fecha_cita'] . ' ' . $cita['hora_cita']); ?></td>
+                                        <td><?php echo htmlspecialchars($cita['fecha_cita'] . ' ' .$cita['hora_cita']); ?></td>
                                         <td>
                                             <span class="badge bg-<?php echo $cita['estado'] == 'pendiente' ? 'warning text-dark' : 'success'; ?>">
                                                 <?php echo ucfirst(htmlspecialchars($cita['estado'])); ?>
@@ -122,52 +129,11 @@ $fotos_privadas = $stmt_fotos->fetchAll();
 
         <hr class="my-5">
 
-        <!-- SECCIÓN 2: Selección de Fotografías (El código que ya teníamos) -->
+        <!-- SECCIÓN 2: Selección de Fotografías -->
         <h4 class="mb-3">Selección de Fotografías</h4>
         <p class="text-muted mb-4">Revisa tu galería privada y selecciona las fotografías que deseas que editemos.</p>
 
-        <?php if (isset($_GET['exito']) && $_GET['exito'] == '1'): ?>
+        <?php if (isset($_GET['exito']) &&$_GET['exito'] == '1'): ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 ¡Tu selección ha sido guardada exitosamente! El estudio ha sido notificado.
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        <?php endif; ?>
-
-        <?php if (empty($fotos_privadas)): ?>
-            <div class="alert alert-info text-center mt-4 p-4 shadow-sm border-0">
-                <p class="mb-0">El estudio aún no ha subido las fotografías de tu sesión. Vuelve a revisar más tarde.</p>
-            </div>
-        <?php else: ?>
-            <form action="procesar_seleccion.php" method="POST">
-                <div class="row g-4 mb-4">
-                    <?php foreach ($fotos_privadas as $foto): ?>
-                        <div class="col-md-4 col-lg-3">
-                            <div class="card h-100 shadow-sm <?php echo $foto['seleccionada'] ? 'border-success border-2' : 'border-0'; ?>">
-                                <img src="<?php echo htmlspecialchars($foto['url_imagen']); ?>" 
-                                     class="card-img-top" 
-                                     alt="Foto de sesión" 
-                                     style="object-fit: cover; height: 200px;">
-                                <div class="card-body text-center bg-light">
-                                    <div class="form-check d-flex justify-content-center align-items-center gap-2">
-                                        <input class="form-check-input fs-5 mt-0" type="checkbox" name="fotos_seleccionadas[]" value="<?php echo $foto['id']; ?>" id="foto_<?php echo $foto['id']; ?>" <?php echo $foto['seleccionada'] ? 'checked' : ''; ?>>
-                                        <label class="form-check-label fw-bold" for="foto_<?php echo $foto['id']; ?>">Seleccionar</label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-                <div class="d-flex justify-content-end bg-white sticky-bottom py-3 border-top">
-                    <button type="submit" class="btn btn-primary btn-lg px-5 shadow">Confirmar Selección de Fotos</button>
-                </div>
-            </form>
-        <?php endif; ?>
-    </main>
-
-    <footer class="bg-dark text-white text-center py-3 mt-auto">
-        <p class="mb-0">&copy; 2026 GES EStudio Fotográfico. Todos los derechos reservados.</p>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"
