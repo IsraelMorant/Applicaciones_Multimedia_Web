@@ -3,12 +3,12 @@ session_start();
 require 'conexion.php';
 
 // Candado estricto: Solo admins
-if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
+if (!isset($_SESSION['usuario_id']) \vert{}\vert{}$_SESSION['rol'] !== 'admin') {
     header("Location: login.php");
     exit;
 }
 
-// 1. Obtener todas las citas del sistema (AHORA INCLUYE EL usuario_id)
+// 1. Obtener todas las citas del sistema 
 $sql = "SELECT c.id, c.usuario_id, c.fecha_cita, c.hora_cita, c.estado, 
                u.nombre AS cliente_nombre, s.nombre AS servicio_nombre 
         FROM citas c 
@@ -16,12 +16,12 @@ $sql = "SELECT c.id, c.usuario_id, c.fecha_cita, c.hora_cita, c.estado,
         JOIN servicios s ON c.servicio_id = s.id 
         ORDER BY c.fecha_cita DESC";
 $stmt = $pdo->query($sql);
-$todas_las_citas = $stmt->fetchAll();
+$todas_las_citas =$stmt->fetchAll();
 
 // 2. Obtener la lista de clientes
 $sql_clientes = "SELECT id, nombre, email FROM usuarios WHERE rol = 'cliente' ORDER BY nombre ASC";
 $stmt_clientes = $pdo->query($sql_clientes);
-$clientes = $stmt_clientes->fetchAll();
+$clientes =$stmt_clientes->fetchAll();
 
 // 3. Obtener las fotos que los clientes ya seleccionaron (TRUE)
 $sql_selecciones = "SELECT g.id, g.url_imagen, g.fecha_subida, u.nombre AS cliente_nombre 
@@ -30,7 +30,7 @@ $sql_selecciones = "SELECT g.id, g.url_imagen, g.fecha_subida, u.nombre AS clien
                     WHERE g.seleccionada = TRUE 
                     ORDER BY g.fecha_subida DESC";
 $stmt_selecciones = $pdo->query($sql_selecciones);
-$fotos_seleccionadas = $stmt_selecciones->fetchAll();
+$fotos_seleccionadas =$stmt_selecciones->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -66,7 +66,7 @@ $fotos_seleccionadas = $stmt_selecciones->fetchAll();
                     <li class="nav-item"><a class="nav-link" href="contacto.php">Contacto</a></li>
                     
                     <?php if(isset($_SESSION['usuario_id'])): ?>
-                        <?php if(isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin'): ?>
+                        <?php if(isset($_SESSION['rol']) &&$_SESSION['rol'] === 'admin'): ?>
                             <li class="nav-item"><a class="nav-link active" href="panel_admin.php">Panel Admin</a></li>
                         <?php else: ?>
                             <li class="nav-item"><a class="nav-link" href="panel_cliente.php">Mi Panel</a></li>
@@ -85,13 +85,13 @@ $fotos_seleccionadas = $stmt_selecciones->fetchAll();
     <main class="container my-5" style="min-height: 70vh;">
         <h2 class="mb-4">Administración General</h2>
 
-        <?php if (isset($_GET['foto']) && $_GET['foto'] == 'guardada'): ?>
+        <?php if (isset($_GET['foto']) &&$_GET['foto'] == 'guardada'): ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 Foto agregada al portafolio público exitosamente.
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <?php endif; ?>
-        <?php if (isset($_GET['galeria']) && $_GET['galeria'] == 'exito'): ?>
+        <?php if (isset($_GET['galeria']) &&$_GET['galeria'] == 'exito'): ?>
             <div class="alert alert-primary alert-dismissible fade show" role="alert">
                 Foto enviada a la galería privada del cliente exitosamente.
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -120,22 +120,28 @@ $fotos_seleccionadas = $stmt_selecciones->fetchAll();
                                     <?php if (empty($todas_las_citas)): ?>
                                         <tr><td colspan="6" class="text-center">No hay citas registradas.</td></tr>
                                     <?php else: ?>
-                                        <?php foreach ($todas_las_citas as $cita): ?>
+                                        <?php foreach ($todas_las_citas as$cita): ?>
                                             <tr>
                                                 <td class="fw-bold text-muted">#<?php echo $cita['id']; ?></td>
                                                 <td><?php echo htmlspecialchars($cita['cliente_nombre']); ?></td>
                                                 <td><?php echo htmlspecialchars($cita['servicio_nombre']); ?></td>
-                                                <td><?php echo htmlspecialchars($cita['fecha_cita'] . ' ' . $cita['hora_cita']); ?></td>
+                                                <td><?php echo htmlspecialchars($cita['fecha_cita'] . ' ' .$cita['hora_cita']); ?></td>
                                                 <td>
                                                     <span class="badge bg-<?php echo $cita['estado'] == 'pendiente' ? 'warning' : 'success'; ?> text-dark">
                                                         <?php echo ucfirst(htmlspecialchars($cita['estado'])); ?>
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <!-- BOTÓN MÁGICO: Guarda el ID del usuario en data-usuario-id -->
-                                                    <button type="button" class="btn btn-sm btn-outline-primary btn-asignar" data-usuario-id="<?php echo $cita['usuario_id']; ?>">
-                                                        Subir fotos
-                                                    </button>
+                                                    <!-- VALIDACIÓN DEL BOTÓN DE ESTADO -->
+                                                    <?php if($cita['estado'] == 'pendiente'): ?>
+                                                        <button type="button" class="btn btn-sm btn-outline-primary btn-asignar" data-usuario-id="<?php echo $cita['usuario_id']; ?>">
+                                                            Subir fotos
+                                                        </button>
+                                                    <?php else: ?>
+                                                        <button type="button" class="btn btn-sm btn-secondary" disabled>
+                                                            Completado
+                                                        </button>
+                                                    <?php endif; ?>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
@@ -181,101 +187,5 @@ $fotos_seleccionadas = $stmt_selecciones->fetchAll();
         <h3 class="mb-4">1. Enviar fotos a revisión</h3>
         <div class="row mb-5">
             <div class="col-md-6 mb-4">
-                <!-- Se le agregó el ID "form-galeria-privada" para el scroll automático -->
                 <div class="card shadow-sm" id="form-galeria-privada">
-                    <div class="card-header bg-primary text-white"><strong>Subir Foto a Galería de Cliente</strong></div>
-                    <div class="card-body">
-                        <form action="procesar_galeria_cliente.php" method="POST" enctype="multipart/form-data">
-                            <div class="mb-3">
-                                <label class="form-label">Seleccionar Cliente</label>
-                                <!-- Se le agregó el ID "select_cliente_destino" para el JS -->
-                                <select name="usuario_id" id="select_cliente_destino" class="form-select" required>
-                                    <option value="">Elegir cliente...</option>
-                                    <?php foreach ($clientes as $cliente): ?>
-                                        <option value="<?php echo $cliente['id']; ?>">
-                                            ID: <?php echo $cliente['id']; ?> - <?php echo htmlspecialchars($cliente['nombre']); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Subir Fotografía en Bruto</label>
-                                <input type="file" name="imagen" class="form-control" accept="image/jpeg, image/png" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100">Enviar Foto al Cliente</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-6 mb-4">
-                <div class="card shadow-sm h-100 border-0 bg-light">
-                    <div class="card-body text-center d-flex flex-column justify-content-center">
-                        <h5 class="text-muted">Instrucciones de Flujo</h5>
-                        <p class="text-muted small">Haz clic en "Subir fotos" directamente en la tabla de citas de arriba para auto-seleccionar al cliente. Sube aquí las fotografías sin editar para que las revisen.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- NUEVA SECCIÓN: Ver las fotos que los clientes ya eligieron -->
-        <h3 class="mb-4">2. Fotografías seleccionadas por clientes</h3>
-        <div class="row g-4 mb-5">
-            <?php if (empty($fotos_seleccionadas)): ?>
-                <div class="col-12">
-                    <div class="alert alert-secondary text-center shadow-sm">
-                        Aún no hay fotografías aprobadas por los clientes.
-                    </div>
-                </div>
-            <?php else: ?>
-                <?php foreach ($fotos_seleccionadas as $foto): ?>
-                    <div class="col-md-3 col-sm-6">
-                        <div class="card h-100 shadow-sm border-success">
-                            <img src="<?php echo htmlspecialchars($foto['url_imagen']); ?>" class="card-img-top" style="object-fit: cover; height: 200px;">
-                            <div class="card-body p-3 text-center bg-light">
-                                <span class="badge bg-success mb-2">Aprobada para edición</span>
-                                <p class="mb-0 fw-bold text-dark">Cliente: <?php echo htmlspecialchars($foto['cliente_nombre']); ?></p>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </div>
-
-    </main>
-
-    <footer class="bg-dark text-white text-center py-3 mt-auto">
-        <p class="mb-0">&copy; 2026 GES EStudio Fotográfico. Todos los derechos reservados.</p>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Script de Automatización de UI -->
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const botonesAsignar = document.querySelectorAll('.btn-asignar');
-            const selectCliente = document.getElementById('select_cliente_destino');
-            const formGaleria = document.getElementById('form-galeria-privada');
-
-            botonesAsignar.forEach(boton => {
-                boton.addEventListener('click', function() {
-                    // 1. Obtener el ID del usuario desde el botón presionado
-                    const usuarioId = this.getAttribute('data-usuario-id');
-                    
-                    // 2. Asignar ese valor al select
-                    selectCliente.value = usuarioId;
-                    
-                    // 3. Hacer scroll suave hacia el formulario
-                    formGaleria.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    
-                    // 4. Agregar un efecto visual para confirmar al usuario que cambió
-                    selectCliente.classList.add('resaltar-select');
-                    setTimeout(() => {
-                        selectCliente.classList.remove('resaltar-select');
-                    }, 1500);
-                });
-            });
-        });
-    </script>
-</body>
-</html>
+                    <div class="card-header bg-primary text-white"><strong>Subir Foto
