@@ -2,19 +2,14 @@
 session_start();
 require 'conexion.php';
 
-if (!isset($_SESSION['usuario_id'])) {
+if (!isset($_SESSION['usuario_id']) || (isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin')) {
     header("Location: login.php");
-    exit;
-}
-
-if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin') {
-    header("Location: panel_admin.php");
     exit;
 }
 
 $usuario_id = $_SESSION['usuario_id'];
 
-// 1. Obtener las citas/servicios contratados por este cliente
+// 1. Obtener las citas
 $sql_citas = "SELECT c.id, c.fecha_cita, c.hora_cita, c.estado, s.nombre AS servicio_nombre 
               FROM citas c 
               JOIN servicios s ON c.servicio_id = s.id 
@@ -24,20 +19,26 @@ $stmt_citas = $pdo->prepare($sql_citas);
 $stmt_citas->execute([':usuario_id' => $usuario_id]);
 $mis_citas = $stmt_citas->fetchAll();
 
-// NUEVA LÓGICA: Verificar si el cliente tiene al menos una cita pendiente para permitirle editar
-$puede_editar = false;
-foreach ($mis_citas as $cita) {
-    if ($cita['estado'] === 'pendiente') {
-        $puede_editar = true;
-        break; 
-    }
-}
+// 2. Lógica de Galería por Cita (NUEVO)
+$cita_seleccionada = isset($_GET['ver_cita']) ? $_GET['ver_cita'] : null;
+$fotos_privadas = [];
+$cita_estado = '';
+$cita_nombre = '';
 
-// 2. Obtener las fotos privadas de la galería
-$sql_fotos = "SELECT id, url_imagen, seleccionada FROM galerias_clientes WHERE usuario_id = :usuario_id ORDER BY fecha_subida DESC";
-$stmt_fotos = $pdo->prepare($sql_fotos);
-$stmt_fotos->execute([':usuario_id' => $usuario_id]);
-$fotos_privadas = $stmt_fotos->fetchAll();
+if ($cita_seleccionada) {
+    foreach ($mis_citas as $cita) {
+        if ($cita['id'] == $cita_seleccionada) {
+            $cita_estado = $cita['estado'];
+            $cita_nombre = $cita['servicio_nombre'];
+            break;
+        }
+    }
+    // Cargar solo las fotos de ESTE trabajo específico
+    $sql_fotos = "SELECT id, url_imagen, seleccionada FROM galerias_clientes WHERE cita_id = :cita_id AND usuario_id = :usuario_id ORDER BY fecha_subida DESC";
+    $stmt_fotos = $pdo->prepare($sql_fotos);
+    $stmt_fotos->execute([':cita_id' => $cita_seleccionada, ':usuario_id' => $usuario_id]);
+    $fotos_privadas = $stmt_fotos->fetchAll();
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -53,9 +54,7 @@ $fotos_privadas = $stmt_fotos->fetchAll();
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="inicio.php">GES EStudio</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item"><a class="nav-link" href="inicio.php">Inicio</a></li>
@@ -110,14 +109,19 @@ $fotos_privadas = $stmt_fotos->fetchAll();
                                             </span>
                                         </td>
                                         <td class="pe-3">
-                                            <?php if($cita['estado'] == 'pendiente'): ?>
-                                                <form action="actualizar_estado.php" method="POST" class="m-0">
-                                                    <input type="hidden" name="cita_id" value="<?php echo $cita['id']; ?>">
-                                                    <button type="submit" class="btn btn-sm btn-success shadow-sm">Aceptar Trabajo</button>
-                                                </form>
-                                            <?php else: ?>
-                                                <button class="btn btn-sm btn-secondary" disabled>Trabajo Finalizado</button>
-                                            <?php endif; ?>
+                                            <div class="d-flex gap-2">
+                                                <!-- NUEVO BOTÓN: Ver Galería de este trabajo -->
+                                                <a href="panel_cliente.php?ver_cita=<?php echo $cita['id']; ?>#galeria-seccion" class="btn btn-sm btn-info text-white shadow-sm">Ver Fotos</a>
+                                                
+                                                <?php if($cita['estado'] == 'pendiente'): ?>
+                                                    <form action="actualizar_estado.php" method="POST" class="m-0">
+                                                        <input type="hidden" name="cita_id" value="<?php echo $cita['id']; ?>">
+                                                        <button type="submit" class="btn btn-sm btn-success shadow-sm">Aceptar Trabajo</button>
+                                                    </form>
+                                                <?php else: ?>
+                                                    <button class="btn btn-sm btn-secondary" disabled>Trabajo Finalizado</button>
+                                                <?php endif; ?>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -131,49 +135,54 @@ $fotos_privadas = $stmt_fotos->fetchAll();
         <hr class="my-5">
 
         <!-- SECCIÓN 2: Selección de Fotografías -->
-        <h4 class="mb-3">Selección de Fotografías</h4>
-        <p class="text-muted mb-4">Revisa tu galería privada y selecciona las fotografías que deseas que editemos.</p>
+        <div id="galeria-seccion">
+            <h4 class="mb-3">Selección de Fotografías</h4>
+            
+            <?php if (isset($_GET['exito']) && $_GET['exito'] == '1'): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    ¡Tu selección ha sido guardada exitosamente! El estudio ha sido notificado.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
 
-        <?php if (isset($_GET['exito']) && $_GET['exito'] == '1'): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                ¡Tu selección ha sido guardada exitosamente! El estudio ha sido notificado.
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        <?php endif; ?>
-
-        <?php if (empty($fotos_privadas)): ?>
-            <div class="alert alert-info text-center mt-4 p-4 shadow-sm border-0">
-                <p class="mb-0">El estudio aún no ha subido las fotografías de tu sesión. Vuelve a revisar más tarde.</p>
-            </div>
-        <?php else: ?>
-            <form action="procesar_seleccion.php" method="POST">
-                <div class="row g-4 mb-4">
-                    <?php foreach ($fotos_privadas as $foto): ?>
-                        <div class="col-md-4 col-lg-3">
-                            <div class="card h-100 shadow-sm <?php echo $foto['seleccionada'] ? 'border-success border-2' : 'border-0'; ?>">
-                                <img src="<?php echo htmlspecialchars($foto['url_imagen']); ?>" class="card-img-top" alt="Foto de sesión" style="object-fit: cover; height: 200px;">
-                                <div class="card-body text-center bg-light">
-                                    <div class="form-check d-flex justify-content-center align-items-center gap-2">
-                                        <!-- Se agregó validación para deshabilitar casillas si no puede editar -->
-                                        <input class="form-check-input fs-5 mt-0" type="checkbox" name="fotos_seleccionadas[]" value="<?php echo $foto['id']; ?>" id="foto_<?php echo $foto['id']; ?>" <?php echo $foto['seleccionada'] ? 'checked' : ''; ?> <?php echo !$puede_editar ? 'disabled' : ''; ?>>
-                                        <label class="form-check-label fw-bold" for="foto_<?php echo $foto['id']; ?>">Seleccionar</label>
+            <?php if (!$cita_seleccionada): ?>
+                <div class="alert alert-secondary text-center mt-4 p-4 shadow-sm border-0">
+                    <p class="mb-0 fs-5">Selecciona el botón <strong>"Ver Fotos"</strong> en alguno de tus servicios arriba para cargar su galería correspondiente.</p>
+                </div>
+            <?php elseif (empty($fotos_privadas)): ?>
+                <div class="alert alert-info text-center mt-4 p-4 shadow-sm border-0">
+                    <p class="mb-0">El estudio aún no ha subido fotografías para el servicio <strong><?php echo htmlspecialchars($cita_nombre); ?></strong>.</p>
+                </div>
+            <?php else: ?>
+                <p class="text-muted mb-4">Mostrando fotos de: <strong><?php echo htmlspecialchars($cita_nombre); ?></strong></p>
+                <form action="procesar_seleccion.php" method="POST">
+                    <input type="hidden" name="cita_id" value="<?php echo $cita_seleccionada; ?>">
+                    <div class="row g-4 mb-4">
+                        <?php foreach ($fotos_privadas as $foto): ?>
+                            <div class="col-md-4 col-lg-3">
+                                <div class="card h-100 shadow-sm <?php echo $foto['seleccionada'] ? 'border-success border-2' : 'border-0'; ?>">
+                                    <img src="<?php echo htmlspecialchars($foto['url_imagen']); ?>" class="card-img-top" alt="Foto de sesión" style="object-fit: cover; height: 200px;">
+                                    <div class="card-body text-center bg-light">
+                                        <div class="form-check d-flex justify-content-center align-items-center gap-2">
+                                            <input class="form-check-input fs-5 mt-0" type="checkbox" name="fotos_seleccionadas[]" value="<?php echo $foto['id']; ?>" id="foto_<?php echo $foto['id']; ?>" <?php echo $foto['seleccionada'] ? 'checked' : ''; ?> <?php echo $cita_estado == 'finalizado' ? 'disabled' : ''; ?>>
+                                            <label class="form-check-label fw-bold" for="foto_<?php echo $foto['id']; ?>">Seleccionar</label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-                <div class="d-flex justify-content-end bg-white sticky-bottom py-3 border-top">
-                    <!-- Botón condicional: Verde si hay pendientes, gris bloqueado si ya finalizó -->
-                    <?php if ($puede_editar): ?>
-                        <button type="submit" class="btn btn-primary btn-lg px-5 shadow">Confirmar Selección de Fotos</button>
-                    <?php else: ?>
-                        <span class="text-muted fw-bold align-self-center me-3">Sesión finalizada. Ya no puedes modificar tu selección.</span>
-                        <button type="button" class="btn btn-secondary btn-lg px-5 shadow" disabled>Selección Cerrada</button>
-                    <?php endif; ?>
-                </div>
-            </form>
-        <?php endif; ?>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="d-flex justify-content-end bg-white sticky-bottom py-3 border-top">
+                        <?php if ($cita_estado == 'pendiente'): ?>
+                            <button type="submit" class="btn btn-primary btn-lg px-5 shadow">Confirmar Selección de Fotos</button>
+                        <?php else: ?>
+                            <span class="text-muted fw-bold align-self-center me-3">Trabajo finalizado. Ya no puedes modificar tu selección.</span>
+                            <button type="button" class="btn btn-secondary btn-lg px-5 shadow" disabled>Selección Cerrada</button>
+                        <?php endif; ?>
+                    </div>
+                </form>
+            <?php endif; ?>
+        </div>
     </main>
 
     <footer class="bg-dark text-white text-center py-3 mt-auto">
