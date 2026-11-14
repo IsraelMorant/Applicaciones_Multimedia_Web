@@ -2,7 +2,7 @@
 session_start();
 require 'conexion.php';
 
-// Candado estricto: Solo admins (Corregido con 'or' para evitar errores de sintaxis)
+// Candado estricto: Solo admins
 if (!isset($_SESSION['usuario_id']) or $_SESSION['rol'] !== 'admin') {
     header("Location: login.php");
     exit;
@@ -18,15 +18,22 @@ $sql = "SELECT c.id, c.usuario_id, c.fecha_cita, c.hora_cita, c.estado,
 $stmt = $pdo->query($sql);
 $todas_las_citas = $stmt->fetchAll();
 
-// 2. Obtener la lista de clientes
-$sql_clientes = "SELECT id, nombre, email FROM usuarios WHERE rol = 'cliente' ORDER BY nombre ASC";
-$stmt_clientes = $pdo->query($sql_clientes);
-$clientes = $stmt_clientes->fetchAll();
+// 2. NUEVO: Obtener solo los trabajos (citas) que están pendientes para subirles fotos
+$sql_citas_pendientes = "SELECT c.id, c.usuario_id, u.nombre AS cliente_nombre, s.nombre AS servicio_nombre 
+                         FROM citas c 
+                         JOIN usuarios u ON c.usuario_id = u.id 
+                         JOIN servicios s ON c.servicio_id = s.id 
+                         WHERE c.estado = 'pendiente' 
+                         ORDER BY c.fecha_cita DESC";
+$stmt_citas_pendientes = $pdo->query($sql_citas_pendientes);
+$citas_pendientes = $stmt_citas_pendientes->fetchAll();
 
-// 3. Obtener las fotos que los clientes ya seleccionaron (TRUE)
-$sql_selecciones = "SELECT g.id, g.url_imagen, g.fecha_subida, u.nombre AS cliente_nombre 
+// 3. Obtener las fotos seleccionadas, ahora mostrando a qué servicio pertenecen
+$sql_selecciones = "SELECT g.id, g.url_imagen, g.fecha_subida, u.nombre AS cliente_nombre, s.nombre AS servicio_nombre 
                     FROM galerias_clientes g 
                     JOIN usuarios u ON g.usuario_id = u.id 
+                    JOIN citas c ON g.cita_id = c.id
+                    JOIN servicios s ON c.servicio_id = s.id
                     WHERE g.seleccionada = TRUE 
                     ORDER BY g.fecha_subida DESC";
 $stmt_selecciones = $pdo->query($sql_selecciones);
@@ -38,7 +45,6 @@ $fotos_seleccionadas = $stmt_selecciones->fetchAll();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administración - GES Estudio</title>
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -85,16 +91,10 @@ $fotos_seleccionadas = $stmt_selecciones->fetchAll();
         <h2 class="mb-4">Administración General</h2>
 
         <?php if (isset($_GET['foto']) && $_GET['foto'] == 'guardada'): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                Foto agregada al portafolio público exitosamente.
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">Foto agregada al portafolio público exitosamente.<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>
         <?php endif; ?>
         <?php if (isset($_GET['galeria']) && $_GET['galeria'] == 'exito'): ?>
-            <div class="alert alert-primary alert-dismissible fade show" role="alert">
-                Foto enviada a la galería privada del cliente exitosamente.
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
+            <div class="alert alert-primary alert-dismissible fade show" role="alert">Foto enviada a la galería privada del cliente exitosamente.<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>
         <?php endif; ?>
 
         <div class="row">
@@ -106,7 +106,7 @@ $fotos_seleccionadas = $stmt_selecciones->fetchAll();
                             <table class="table table-striped align-middle">
                                 <thead>
                                     <tr>
-                                        <th>ID Cita</th>
+                                        <th>ID</th>
                                         <th>Cliente</th>
                                         <th>Servicio</th>
                                         <th>Fecha/Hora</th>
@@ -131,13 +131,12 @@ $fotos_seleccionadas = $stmt_selecciones->fetchAll();
                                                 </td>
                                                 <td>
                                                     <?php if($cita['estado'] == 'pendiente'): ?>
-                                                        <button type="button" class="btn btn-sm btn-outline-primary btn-asignar" data-usuario-id="<?php echo $cita['usuario_id']; ?>">
+                                                        <!-- AHORA PASAMOS EL ID DE LA CITA EN LUGAR DEL USUARIO -->
+                                                        <button type="button" class="btn btn-sm btn-outline-primary btn-asignar" data-cita-id="<?php echo $cita['id']; ?>">
                                                             Subir fotos
                                                         </button>
                                                     <?php else: ?>
-                                                        <button type="button" class="btn btn-sm btn-secondary" disabled>
-                                                            Completado
-                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-secondary" disabled>Completado</button>
                                                     <?php endif; ?>
                                                 </td>
                                             </tr>
@@ -183,16 +182,17 @@ $fotos_seleccionadas = $stmt_selecciones->fetchAll();
         <div class="row mb-5">
             <div class="col-md-6 mb-4">
                 <div class="card shadow-sm" id="form-galeria-privada">
-                    <div class="card-header bg-primary text-white"><strong>Subir Foto a Galería de Cliente</strong></div>
+                    <div class="card-header bg-primary text-white"><strong>Subir Foto a Trabajo Específico</strong></div>
                     <div class="card-body">
                         <form action="procesar_galeria_cliente.php" method="POST" enctype="multipart/form-data">
                             <div class="mb-3">
-                                <label class="form-label">Seleccionar Cliente</label>
-                                <select name="usuario_id" id="select_cliente_destino" class="form-select" required>
-                                    <option value="">Elegir cliente...</option>
-                                    <?php foreach ($clientes as $cliente): ?>
-                                        <option value="<?php echo $cliente['id']; ?>">
-                                            ID: <?php echo $cliente['id']; ?> - <?php echo htmlspecialchars($cliente['nombre']); ?>
+                                <label class="form-label">Seleccionar Trabajo Pendiente</label>
+                                <!-- AHORA EL SELECT MUESTRA LAS CITAS PENDIENTES -->
+                                <select name="cita_id" id="select_cita_destino" class="form-select" required>
+                                    <option value="">Elegir trabajo...</option>
+                                    <?php foreach ($citas_pendientes as $cita_pen): ?>
+                                        <option value="<?php echo $cita_pen['id']; ?>">
+                                            Cita #<?php echo $cita_pen['id']; ?> - <?php echo htmlspecialchars($cita_pen['cliente_nombre'] . ' (' . $cita_pen['servicio_nombre'] . ')'); ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -201,7 +201,7 @@ $fotos_seleccionadas = $stmt_selecciones->fetchAll();
                                 <label class="form-label">Subir Fotografía en Bruto</label>
                                 <input type="file" name="imagen" class="form-control" accept="image/jpeg, image/png" required>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100">Enviar Foto al Cliente</button>
+                            <button type="submit" class="btn btn-primary w-100">Enviar Foto al Trabajo</button>
                         </form>
                     </div>
                 </div>
@@ -211,7 +211,7 @@ $fotos_seleccionadas = $stmt_selecciones->fetchAll();
                 <div class="card shadow-sm h-100 border-0 bg-light">
                     <div class="card-body text-center d-flex flex-column justify-content-center">
                         <h5 class="text-muted">Instrucciones de Flujo</h5>
-                        <p class="text-muted small">Haz clic en "Subir fotos" directamente en la tabla de citas de arriba para auto-seleccionar al cliente. Sube aquí las fotografías sin editar para que las revisen.</p>
+                        <p class="text-muted small">Haz clic en "Subir fotos" directamente en la tabla de citas de arriba para auto-seleccionar el trabajo. Sube aquí las fotografías sin editar para que las revisen.</p>
                     </div>
                 </div>
             </div>
@@ -232,7 +232,8 @@ $fotos_seleccionadas = $stmt_selecciones->fetchAll();
                             <img src="<?php echo htmlspecialchars($foto['url_imagen']); ?>" class="card-img-top" style="object-fit: cover; height: 200px;">
                             <div class="card-body p-3 text-center bg-light">
                                 <span class="badge bg-success mb-2">Aprobada para edición</span>
-                                <p class="mb-0 fw-bold text-dark">Cliente: <?php echo htmlspecialchars($foto['cliente_nombre']); ?></p>
+                                <p class="mb-1 fw-bold text-dark"><?php echo htmlspecialchars($foto['cliente_nombre']); ?></p>
+                                <p class="mb-0 text-muted small"><?php echo htmlspecialchars($foto['servicio_nombre']); ?></p>
                             </div>
                         </div>
                     </div>
@@ -250,17 +251,18 @@ $fotos_seleccionadas = $stmt_selecciones->fetchAll();
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const botonesAsignar = document.querySelectorAll('.btn-asignar');
-            const selectCliente = document.getElementById('select_cliente_destino');
+            const selectCita = document.getElementById('select_cita_destino');
             const formGaleria = document.getElementById('form-galeria-privada');
 
             botonesAsignar.forEach(boton => {
                 boton.addEventListener('click', function() {
-                    const usuarioId = this.getAttribute('data-usuario-id');
-                    selectCliente.value = usuarioId;
+                    // Ahora tomamos el cita-id en lugar del usuario-id
+                    const citaId = this.getAttribute('data-cita-id');
+                    selectCita.value = citaId;
                     formGaleria.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    selectCliente.classList.add('resaltar-select');
+                    selectCita.classList.add('resaltar-select');
                     setTimeout(() => {
-                        selectCliente.classList.remove('resaltar-select');
+                        selectCita.classList.remove('resaltar-select');
                     }, 1500);
                 });
             });
