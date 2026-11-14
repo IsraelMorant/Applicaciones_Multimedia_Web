@@ -18,7 +18,7 @@ $sql = "SELECT c.id, c.usuario_id, c.fecha_cita, c.hora_cita, c.estado,
 $stmt = $pdo->query($sql);
 $todas_las_citas = $stmt->fetchAll();
 
-// 2. NUEVO: Obtener solo los trabajos (citas) que están pendientes para subirles fotos
+// 2. Obtener solo los trabajos (citas) que están pendientes para subirles fotos
 $sql_citas_pendientes = "SELECT c.id, c.usuario_id, u.nombre AS cliente_nombre, s.nombre AS servicio_nombre 
                          FROM citas c 
                          JOIN usuarios u ON c.usuario_id = u.id 
@@ -28,16 +28,23 @@ $sql_citas_pendientes = "SELECT c.id, c.usuario_id, u.nombre AS cliente_nombre, 
 $stmt_citas_pendientes = $pdo->query($sql_citas_pendientes);
 $citas_pendientes = $stmt_citas_pendientes->fetchAll();
 
-// 3. Obtener las fotos seleccionadas, ahora mostrando a qué servicio pertenecen
-$sql_selecciones = "SELECT g.id, g.url_imagen, g.fecha_subida, u.nombre AS cliente_nombre, s.nombre AS servicio_nombre 
-                    FROM galerias_clientes g 
-                    JOIN usuarios u ON g.usuario_id = u.id 
-                    JOIN citas c ON g.cita_id = c.id
-                    JOIN servicios s ON c.servicio_id = s.id
-                    WHERE g.seleccionada = TRUE 
-                    ORDER BY g.fecha_subida DESC";
-$stmt_selecciones = $pdo->query($sql_selecciones);
-$fotos_seleccionadas = $stmt_selecciones->fetchAll();
+// 3. NUEVO: Lógica para ver fotos aprobadas filtradas por trabajo
+$cita_ver_aprobadas = isset($_GET['ver_cita']) ? $_GET['ver_cita'] : null;
+$fotos_seleccionadas = [];
+$info_cita_aprobada = null;
+
+if ($cita_ver_aprobadas) {
+    // Obtener información de la cita que estamos viendo
+    $stmt_info = $pdo->prepare("SELECT c.id, u.nombre AS cliente_nombre, s.nombre AS servicio_nombre FROM citas c JOIN usuarios u ON c.usuario_id = u.id JOIN servicios s ON c.servicio_id = s.id WHERE c.id = :id");
+    $stmt_info->execute([':id' => $cita_ver_aprobadas]);
+    $info_cita_aprobada = $stmt_info->fetch();
+
+    // Obtener solo las fotos seleccionadas de esa cita
+    $sql_selecciones = "SELECT id, url_imagen, fecha_subida FROM galerias_clientes WHERE cita_id = :cita_id AND seleccionada = TRUE ORDER BY fecha_subida DESC";
+    $stmt_selecciones = $pdo->prepare($sql_selecciones);
+    $stmt_selecciones->execute([':cita_id' => $cita_ver_aprobadas]);
+    $fotos_seleccionadas = $stmt_selecciones->fetchAll();
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -94,10 +101,11 @@ $fotos_seleccionadas = $stmt_selecciones->fetchAll();
             <div class="alert alert-success alert-dismissible fade show" role="alert">Foto agregada al portafolio público exitosamente.<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>
         <?php endif; ?>
         <?php if (isset($_GET['galeria']) && $_GET['galeria'] == 'exito'): ?>
-            <div class="alert alert-primary alert-dismissible fade show" role="alert">Foto enviada a la galería privada del cliente exitosamente.<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>
+            <div class="alert alert-primary alert-dismissible fade show" role="alert">Foto enviada al trabajo del cliente exitosamente.<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>
         <?php endif; ?>
 
         <div class="row">
+            <!-- Tabla de Citas -->
             <div class="col-lg-8 mb-4">
                 <div class="card shadow-sm h-100">
                     <div class="card-header bg-dark text-white"><strong>Todas las Citas</strong></div>
@@ -130,14 +138,18 @@ $fotos_seleccionadas = $stmt_selecciones->fetchAll();
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <?php if($cita['estado'] == 'pendiente'): ?>
-                                                        <!-- AHORA PASAMOS EL ID DE LA CITA EN LUGAR DEL USUARIO -->
-                                                        <button type="button" class="btn btn-sm btn-outline-primary btn-asignar" data-cita-id="<?php echo $cita['id']; ?>">
-                                                            Subir fotos
-                                                        </button>
-                                                    <?php else: ?>
-                                                        <button type="button" class="btn btn-sm btn-secondary" disabled>Completado</button>
-                                                    <?php endif; ?>
+                                                    <div class="d-flex gap-2">
+                                                        <!-- NUEVO BOTÓN: Ver Aprobadas -->
+                                                        <a href="panel_admin.php?ver_cita=<?php echo $cita['id']; ?>#seccion-aprobadas" class="btn btn-sm btn-info text-white shadow-sm" title="Ver fotos que el cliente eligió">Ver aprobadas</a>
+                                                        
+                                                        <?php if($cita['estado'] == 'pendiente'): ?>
+                                                            <button type="button" class="btn btn-sm btn-outline-primary btn-asignar shadow-sm" data-cita-id="<?php echo $cita['id']; ?>">
+                                                                Subir fotos
+                                                            </button>
+                                                        <?php else: ?>
+                                                            <button type="button" class="btn btn-sm btn-secondary shadow-sm" disabled>Completado</button>
+                                                        <?php endif; ?>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
@@ -149,6 +161,7 @@ $fotos_seleccionadas = $stmt_selecciones->fetchAll();
                 </div>
             </div>
 
+            <!-- Formulario de Portafolio Público -->
             <div class="col-lg-4 mb-4">
                 <div class="card shadow-sm h-100">
                     <div class="card-header bg-success text-white"><strong>Agregar a Portafolio Público</strong></div>
@@ -187,7 +200,6 @@ $fotos_seleccionadas = $stmt_selecciones->fetchAll();
                         <form action="procesar_galeria_cliente.php" method="POST" enctype="multipart/form-data">
                             <div class="mb-3">
                                 <label class="form-label">Seleccionar Trabajo Pendiente</label>
-                                <!-- AHORA EL SELECT MUESTRA LAS CITAS PENDIENTES -->
                                 <select name="cita_id" id="select_cita_destino" class="form-select" required>
                                     <option value="">Elegir trabajo...</option>
                                     <?php foreach ($citas_pendientes as $cita_pen): ?>
@@ -217,27 +229,40 @@ $fotos_seleccionadas = $stmt_selecciones->fetchAll();
             </div>
         </div>
 
-        <h3 class="mb-4">2. Fotografías seleccionadas por clientes</h3>
-        <div class="row g-4 mb-5">
-            <?php if (empty($fotos_seleccionadas)): ?>
-                <div class="col-12">
-                    <div class="alert alert-secondary text-center shadow-sm">
-                        Aún no hay fotografías aprobadas por los clientes.
-                    </div>
+        <!-- NUEVA SECCIÓN: Fotografías aprobadas con filtro -->
+        <div id="seccion-aprobadas">
+            <h3 class="mb-4">2. Fotografías aprobadas para edición</h3>
+            
+            <?php if (!$cita_ver_aprobadas): ?>
+                <div class="alert alert-secondary text-center shadow-sm p-4">
+                    <p class="mb-0 fs-5">Selecciona el botón <strong>"Ver aprobadas"</strong> en la tabla de citas para cargar las fotos que el cliente eligió para ese proyecto.</p>
                 </div>
             <?php else: ?>
-                <?php foreach ($fotos_seleccionadas as $foto): ?>
-                    <div class="col-md-3 col-sm-6">
-                        <div class="card h-100 shadow-sm border-success">
-                            <img src="<?php echo htmlspecialchars($foto['url_imagen']); ?>" class="card-img-top" style="object-fit: cover; height: 200px;">
-                            <div class="card-body p-3 text-center bg-light">
-                                <span class="badge bg-success mb-2">Aprobada para edición</span>
-                                <p class="mb-1 fw-bold text-dark"><?php echo htmlspecialchars($foto['cliente_nombre']); ?></p>
-                                <p class="mb-0 text-muted small"><?php echo htmlspecialchars($foto['servicio_nombre']); ?></p>
+                <div class="alert alert-info shadow-sm mb-4">
+                    Mostrando fotografías aprobadas para el trabajo <strong>#<?php echo $info_cita_aprobada['id']; ?> - <?php echo htmlspecialchars($info_cita_aprobada['cliente_nombre']); ?> (<?php echo htmlspecialchars($info_cita_aprobada['servicio_nombre']); ?>)</strong>.
+                    <a href="panel_admin.php#seccion-aprobadas" class="btn btn-sm btn-outline-secondary float-end">Cerrar vista</a>
+                </div>
+
+                <div class="row g-4 mb-5">
+                    <?php if (empty($fotos_seleccionadas)): ?>
+                        <div class="col-12">
+                            <div class="alert alert-warning text-center shadow-sm">
+                                El cliente aún no ha aprobado ninguna fotografía para este trabajo, o la galería está vacía.
                             </div>
                         </div>
-                    </div>
-                <?php endforeach; ?>
+                    <?php else: ?>
+                        <?php foreach ($fotos_seleccionadas as $foto): ?>
+                            <div class="col-md-3 col-sm-6">
+                                <div class="card h-100 shadow-sm border-success">
+                                    <img src="<?php echo htmlspecialchars($foto['url_imagen']); ?>" class="card-img-top" style="object-fit: cover; height: 200px;">
+                                    <div class="card-body p-3 text-center bg-light">
+                                        <span class="badge bg-success">Aprobada para edición</span>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
             <?php endif; ?>
         </div>
     </main>
@@ -256,7 +281,6 @@ $fotos_seleccionadas = $stmt_selecciones->fetchAll();
 
             botonesAsignar.forEach(boton => {
                 boton.addEventListener('click', function() {
-                    // Ahora tomamos el cita-id en lugar del usuario-id
                     const citaId = this.getAttribute('data-cita-id');
                     selectCita.value = citaId;
                     formGaleria.scrollIntoView({ behavior: 'smooth', block: 'center' });
