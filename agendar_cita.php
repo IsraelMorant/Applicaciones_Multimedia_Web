@@ -20,9 +20,9 @@ if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GES Estudio</title>
-    <!-- Bootstrap 5 CSS (Cumple con CSS y Diseño Responsivo) -->
+    <!-- Bootstrap 5 CSS  -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Tu archivo CSS personalizado para detalles específicos -->
+   
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -60,7 +60,7 @@ if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin') {
             </div>
         </div>
     </nav>
-    <!-- Contenedor Principal (Aquí cambiará el contenido en cada una de las 10 páginas) -->
+    <!-- Contenedor Principal -->
     <main class="container my-5" style="min-height: 70vh;">
 <div class="row justify-content-center">
     <div class="col-md-8">
@@ -100,7 +100,7 @@ if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin') {
         <p class="mb-0">&copy; 2026 GES EStudio Fotográfico. Todos los derechos reservados.</p>
     </footer>
 
-    <!-- Bootstrap JS (Necesario para que el menú funcione en teléfonos) -->
+    <!-- Bootstrap JS  -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
