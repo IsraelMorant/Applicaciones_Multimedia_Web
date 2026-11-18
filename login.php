@@ -52,6 +52,12 @@ session_start();
      <div class="row justify-content-center">
     <div class="col-md-5">
         <h2 class="text-center mb-4">Iniciar Sesión</h2>
+        <?php if (isset($_GET['error'])): ?>
+    <div class="alert alert-danger alert-dismissible fade show text-center shadow-sm" role="alert">
+        <strong>Error de acceso:</strong> El correo o la contraseña son incorrectos. Por favor, verifica tus datos.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<?php endif; ?>
         <form action="procesar_login.php" method="POST" class="card p-4 shadow-sm">
             <div class="mb-3">
                 <label for="email" class="form-label">Correo electrónico</label>
