@@ -19,7 +19,7 @@ $stmt_citas = $pdo->prepare($sql_citas);
 $stmt_citas->execute([':usuario_id' => $usuario_id]);
 $mis_citas = $stmt_citas->fetchAll();
 
-// 2. Lógica de Galería por Cita (NUEVO)
+// 2. Lógica de Galería por Cita 
 $cita_seleccionada = isset($_GET['ver_cita']) ? $_GET['ver_cita'] : null;
 $fotos_privadas = [];
 $cita_estado = '';
@@ -110,7 +110,7 @@ if ($cita_seleccionada) {
                                         </td>
                                         <td class="pe-3">
                                             <div class="d-flex gap-2">
-                                                <!-- NUEVO BOTÓN: Ver Galería de este trabajo -->
+                                                <!-- Ver Galería de este trabajo -->
                                                 <a href="panel_cliente.php?ver_cita=<?php echo $cita['id']; ?>#galeria-seccion" class="btn btn-sm btn-info text-white shadow-sm">Ver Fotos</a>
                                                 
                                                 <?php if($cita['estado'] == 'pendiente'): ?>

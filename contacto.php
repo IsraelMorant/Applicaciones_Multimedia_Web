@@ -2,7 +2,7 @@
 session_start();
 require 'conexion.php';
 
-// Variables por defecto (vacías para visitantes)
+// Variables por defecto 
 $nombre_cliente = "";
 $email_cliente = "";
 $es_cliente = false;

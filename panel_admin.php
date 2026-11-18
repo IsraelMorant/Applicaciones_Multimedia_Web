@@ -229,7 +229,7 @@ if ($cita_ver_aprobadas) {
             </div>
         </div>
 
-        <!-- NUEVA SECCIÓN: Fotografías aprobadas con filtro -->
+        <!-- Fotografías aprobadas con filtro -->
         <div id="seccion-aprobadas">
             <h3 class="mb-4">2. Fotografías aprobadas para edición</h3>
             

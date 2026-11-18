@@ -13,7 +13,7 @@
    2. ESTILOS GLOBALES
    ========================================= */
 body {
-    /* Un fondo sutilmente entintado hacia el verde pastel para no usar blanco puro */
+    
     background-color: #fcfdfa; 
     color: var(--color-marino);
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -101,7 +101,7 @@ body {
 }
 
 .text-muted {
-    color: #6c757d !important; /* Mantenemos un gris legible para subtítulos */
+    color: #6c757d !important; 
 }
 
 /* Etiquetas (Badges) */

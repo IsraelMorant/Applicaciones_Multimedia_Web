@@ -32,6 +32,6 @@ try {
    // error_log("Error de conexión: " . $e->getMessage());
   //  die("Error interno del servidor. Por favor, intenta más tarde.");
 
-die("Error real de BD: " . $e->getMessage());
+die("Error real de BD: ");
 }
 ?>

@@ -8,7 +8,7 @@ try {
     $stmt = $pdo->query($sql);
     $fotos = $stmt->fetchAll();
 } catch (PDOException $e) {
-    // Si la tabla no existe o hay error, evitamos que la página se rompa
+   
     $fotos = []; 
 }
 ?>
@@ -46,10 +46,10 @@ try {
     <?php endif; ?>
     
     <li class="nav-item"><a class="nav-link" href="perfil.php">Mi Cuenta</a></li>
-    <!-- Quitamos 'nav-link' del botón de Salir -->
+
     <li class="nav-item ms-2 align-self-center"><a class="btn btn-outline-danger btn-sm" href="logout.php">Salir</a></li>
 <?php else: ?>
-    <!-- Quitamos 'nav-link' del botón de Acceder -->
+
     <li class="nav-item ms-2 align-self-center"><a class="btn btn-outline-light" href="login.php">Acceder</a></li>
 <?php endif; ?>
                 </ul>
@@ -76,7 +76,7 @@ try {
                 </div>
             <?php else: ?>
                 <?php foreach ($fotos as $foto): ?>
-                    <!-- La clase 'portfolio-item' y la categoría impresa dinámicamente conectan con el JS -->
+
                     <div class="col-md-4 portfolio-item <?php echo strtolower(trim(htmlspecialchars($foto['categoria']))); ?>">
                         <div class="card border-0 shadow-sm h-100">
                             <img src="<?php echo htmlspecialchars($foto['url_imagen']); ?>" 

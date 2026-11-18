@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // 1. Obtener la categoría a filtrar
             const filterValue = button.getAttribute('data-filter');
 
-            // 2. Actualizar estilos de los botones (Activo vs Inactivo)
+            // 2. Actualizar estilos de los botones 
             filterButtons.forEach(btn => {
                 btn.classList.remove('btn-dark');
                 btn.classList.add('btn-outline-dark');

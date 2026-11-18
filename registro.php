@@ -7,9 +7,9 @@ session_start();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GES Estudio</title>
-    <!-- Bootstrap 5 CSS (Cumple con CSS y Diseño Responsivo) -->
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Tu archivo CSS personalizado para detalles específicos -->
+   
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -37,10 +37,10 @@ session_start();
     <?php endif; ?>
     
     <li class="nav-item"><a class="nav-link" href="perfil.php">Mi Cuenta</a></li>
-    <!-- Quitamos 'nav-link' del botón de Salir -->
+   
     <li class="nav-item ms-2 align-self-center"><a class="btn btn-outline-danger btn-sm" href="logout.php">Salir</a></li>
 <?php else: ?>
-    <!-- Quitamos 'nav-link' del botón de Acceder -->
+   
     <li class="nav-item ms-2 align-self-center"><a class="btn btn-outline-light" href="login.php">Acceder</a></li>
 <?php endif; ?>
 
@@ -48,11 +48,17 @@ session_start();
             </div>
         </div>
     </nav>
-    <!-- Contenedor Principal (Aquí cambiará el contenido en cada una de las 10 páginas) -->
+    <!-- Contenedor Principal  -->
     <main class="container my-5" style="min-height: 70vh;">
 <div class="row justify-content-center">
     <div class="col-md-6">
         <h2 class="text-center mb-4">Crear Cuenta</h2>
+        <?php if (isset($_GET['error']) && $_GET['error'] == 'correo_duplicado'): ?>
+    <div class="alert alert-danger alert-dismissible fade show text-center shadow-sm" role="alert">
+        <strong>Atención:</strong> Ese correo electrónico ya está registrado. Intenta iniciar sesión o usar un correo distinto.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<?php endif; ?>
         <form action="procesar_registro.php" method="POST" class="card p-4 shadow-sm">
             <div class="mb-3">
                 <label for="nombre" class="form-label">Nombre completo</label>
@@ -77,7 +83,7 @@ session_start();
         <p class="mb-0">&copy; 2026 GES EStudio Fotográfico. Todos los derechos reservados.</p>
     </footer>
 
-    <!-- Bootstrap JS (Necesario para que el menú funcione en teléfonos) -->
+    <!-- Bootstrap JS  -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
